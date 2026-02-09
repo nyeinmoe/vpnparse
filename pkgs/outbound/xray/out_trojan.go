@@ -3,8 +3,8 @@ package xray
 import (
 	"fmt"
 
-	"github.com/komoe-monywa/uri-to-json/pkgs/parser"
-	"github.com/komoe-monywa/uri-to-json/pkgs/utils"
+	"github.com/komoe-monywa/vpnparse/pkgs/parser"
+	"github.com/komoe-monywa/vpnparse/pkgs/utils"
 	"github.com/gogf/gf/v2/encoding/gjson"
 )
 
