@@ -4,12 +4,12 @@ go 1.25.7
 
 require (
 	github.com/gogf/gf/v2 v2.6.1
-	github.com/gvcgo/goutils v0.8.5
-	github.com/urfave/cli/v2 v2.25.7
+	github.com/gvcgo/goutils v1.0.8
+	github.com/urfave/cli/v2 v3.6.2
 )
 
 require (
-	atomicgo.dev/cursor v0.1.1 // indirect
+	atomicgo.dev/cursor v0.2.0 // indirect
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.0.2 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
