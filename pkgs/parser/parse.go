@@ -60,7 +60,7 @@ func ParseRawUri(rawUri string) (result string) {
 
 	host := r.Host
 	uname := r.User.Username()
-	_, hasPassword := r.User.Password()
+	passw, hasPassword := r.User.Password()
 
 	if !strings.Contains(rawUri, "@") {
 		if hostDecrypted := crypt.DecodeBase64(host); hostDecrypted != "" {
@@ -71,6 +71,7 @@ func ParseRawUri(rawUri string) (result string) {
 			result = strings.ReplaceAll(rawUri, uname, unameDecrypted)
 		}
 	} else if hasPassword {
+		password = passw
 		result = rawUri
 		}
 
@@ -80,4 +81,5 @@ func ParseRawUri(rawUri string) (result string) {
 	result = HandleQuery(result)
 	return
 }
+
 
