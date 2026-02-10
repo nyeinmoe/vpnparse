@@ -108,7 +108,9 @@ func ParseRawUri(rawUri string) (result string) {
 		if unameDecrypted := crypt.DecodeBase64(uname); unameDecrypted != "" {
 			result = strings.ReplaceAll(rawUri, uname, unameDecrypted)
 		}
-	}
+	} else if hasPassword {
+		result = rawUri
+		}
 
 	if strings.Contains(result, "%") {
 		result, _ = url.QueryUnescape(result)
@@ -117,5 +119,6 @@ func ParseRawUri(rawUri string) (result string) {
 	result = HandleQuery(result)
 	return
 }
+
 
 
