@@ -55,14 +55,25 @@ func (that *ParserSS) Parse(rawUri string) {
 		that.StreamField = &StreamField{}
 		that.Address = u.Hostname()
 		that.Port, _ = strconv.Atoi(u.Port())
-		that.Method = u.User.Username()
+
+		userInfoPart :=""
+		if strings.Contains(rawUri, "://") {
+			temp := strings.Split(rawUri, "://")[1]
+			userInfoPart = strings.Split(temp, "@") [0]
+			}
+		if strings.Contains(userInfoPart, ":") {
+			parts := strings.SplitN(userInfoPart, ":", 2)
+			that.Method = parts[0]
+			that.Password = parts[1]
+			}
+
+		
 		if that.Method == "rc4" {
 			that.Method = "rc4-md5"
 		}
 		if _, ok := SSMethod[that.Method]; !ok {
 			that.Method = "none"
 		}
-		that.Password, _ = u.User.Password()
 
 		query := u.Query()
 		that.Host = query.Get("host")
@@ -94,3 +105,4 @@ func (that *ParserSS) Show() {
 		that.Method,
 		that.Password)
 }
+
