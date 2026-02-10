@@ -5,7 +5,7 @@ go 1.25.7
 require (
 	github.com/gogf/gf/v2 v2.6.1
 	github.com/gvcgo/goutils v1.0.8
-	github.com/urfave/cli/v2 v3.6.2
+	github.com/urfave/cli/v2 v2.25.7
 )
 
 require (
