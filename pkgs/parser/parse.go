@@ -14,7 +14,8 @@ const (
 	SchemeTrojan    string = "trojan://"
 	SchemeVless     string = "vless://"
 	SchemeVmess     string = "vmess://"
-	SchemeWireguard string = "wireguard://"
+	SchemeWireguardOld string = "wireguard://"
+	SchemeWireguard    string = "wg://"
 )
 
 func GetVpnScheme(rawUri string) string {
