@@ -2,7 +2,6 @@ package xray
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/gogf/gf/v2/encoding/gjson"
 	"github.com/komoe-shwemyae/vpnparse/pkgs/parser"
@@ -11,18 +10,17 @@ import (
 
 var XrayWireguard = `{
   "protocol": "wireguard",
-  "tag": "wireguard-out",
+  "tag": "proxy",
   "settings": {
-    "secretKey": "",
-    "address": [],
-    "peers": [
+    "servers": [
       {
+        "address": "",
+        "port": 0,
         "publicKey": "",
-        "allowedIPs": ["0.0.0.0/0","::/0"],
-        "endpoint": ""
+        "secretKey": "",
+        "mtu": 1280
       }
-    ],
-    "mtu": 1280
+    ]
   }
 }`
 
@@ -80,58 +78,21 @@ func (x *WireguardOut) GetOutboundStr() string {
 // -------------------------
 
 func (x *WireguardOut) getSettings() string {
-	if x.Parser == nil || x.Parser.Address == "" || x.Parser.Port == 0 {
+	if x.Parser == nil {
 		return ""
 	}
 
 	j := gjson.New(XrayWireguard)
+
 	j.Set("tag", utils.OutboundTag)
-	j.Set("settings.secretKey", x.Parser.PrivateKey)
 
-	// addresses
-	var addresses []string
-	if x.Parser.AddrV4 != "" {
-		addr := strings.TrimSpace(x.Parser.AddrV4)
-		if !strings.Contains(addr, "/") {
-			addr += "/32"
-		}
-		addresses = append(addresses, addr)
+	j.Set("settings.servers.0.address", x.Parser.Address)
+	j.Set("settings.servers.0.port", x.Parser.Port)
+	j.Set("settings.servers.0.publicKey", x.Parser.PublicKey)
+	j.Set("settings.servers.0.secretKey", x.Parser.PrivateKey)
 
-	} else {
-		addresses = append(addresses, "10.0.0.1/32")
-	}
-	if x.Parser.AddrV6 != "" {
-		if !strings.Contains(x.Parser.AddrV6, "/") {
-			addresses = append(addresses, x.Parser.AddrV6+"/128")
-		} else {
-			addresses = append(addresses, x.Parser.AddrV6)
-		}
-	}
-	j.Set("settings.address", addresses)
-
-	// Peer Settings
-	j.Set("settings.peers.0.publicKey", x.Parser.PublicKey)
-	// PresharedKey ရှိရင် ထည့်ပေးရန် (Xray support လုပ်ပါတယ်)
-	if x.Parser.PresharedKey != "" {
-		j.Set("settings.peers.0.preSharedKey", x.Parser.PresharedKey)
-	}
-
-	endpoint := fmt.Sprintf("%s:%d", x.Parser.Address, x.Parser.Port)
-	j.Set("settings.peers.0.endpoint", endpoint)
-
-	if x.Parser.KeepAlive > 0 {
-		j.Set("settings.peers.0.persistentKeepalive", x.Parser.KeepAlive)
-	}
-	// MTU
 	if x.Parser.MTU > 0 {
-		j.Set("settings.mtu", x.Parser.MTU)
-	} else {
-		j.Set("settings.mtu", 1420) // Default MTU
-	}
-
-	// Reserved (Xray-core မှာ [int, int, int] format အတိုင်း ဖြစ်ရပါမယ်)
-	if len(x.Parser.Reserved) > 0 {
-		j.Set("settings.reserved", x.Parser.Reserved)
+		j.Set("settings.servers.0.mtu", x.Parser.MTU)
 	}
 
 	return j.MustToJsonString()
