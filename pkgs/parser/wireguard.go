@@ -1,16 +1,14 @@
 package parser
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/gvcgo/goutils/pkgs/gtui"
 )
-
-
 
 type ParserWirguard struct {
 	PrivateKey   string
@@ -61,9 +59,11 @@ func (p *ParserWirguard) Parse(rawUri string) error {
 	p.Port = port
 
 	q := u.Query()
-	p.PrivateKey = q.Get("privateKey")
-	p.PublicKey = q.Get("publicKey")
-	p.PresharedKey = q.Get("presharedKey")
+
+	// 🔥 FIX: restore + in base64 keys
+	p.PrivateKey = restorePlus(q.Get("privateKey"))
+	p.PublicKey = restorePlus(q.Get("publicKey"))
+	p.PresharedKey = restorePlus(q.Get("presharedKey"))
 	p.AddrV4 = q.Get("ip")
 
 	p.MTU, _ = strconv.Atoi(q.Get("mtu"))
@@ -73,9 +73,10 @@ func (p *ParserWirguard) Parse(rawUri string) error {
 	// Reserved array
 	res := q.Get("reserved")
 	if res != "" {
+		p.Reserved = []int{} // reset အရင်လုပ်ပါ
 		parts := strings.Split(res, ",")
 		for _, v := range parts {
-			n, _ := strconv.Atoi(v)
+			n, _ := strconv.Atoi(strings.TrimSpace(v))
 			p.Reserved = append(p.Reserved, n)
 		}
 	}
@@ -85,6 +86,9 @@ func (p *ParserWirguard) Parse(rawUri string) error {
 	return nil
 }
 
+func restorePlus(s string) string {
+	return strings.ReplaceAll(s, " ", "+")
+}
 
 func (p *ParserWirguard) GetAddr() string {
 	return p.Address
