@@ -1,74 +1,114 @@
-package parser
+package xray
 
 import (
-	"net/url"
-	"strings"
+	"fmt"
 
-	"github.com/gvcgo/goutils/pkgs/crypt"
-	"github.com/gvcgo/goutils/pkgs/gtui"
+	"github.com/gogf/gf/v2/encoding/gjson"
+	"github.com/komoe-monywa/vpnparse/pkgs/parser"
+	"github.com/komoe-monywa/vpnparse/pkgs/utils"
 )
 
-const (
-	SchemeSS        string = "ss://"
-	SchemeSSR       string = "ssr://"
-	SchemeTrojan    string = "trojan://"
-	SchemeVless     string = "vless://"
-	SchemeVmess     string = "vmess://"
-	SchemeWireguardOld string = "wireguard://"
-	SchemeWireguard    string = "wg://"
-)
+var XrayWireguard = `{
+  "protocol": "wireguard",
+  "tag": "wireguard-out",
+  "settings": {
+    "secretKey": "",
+    "address": [],
+    "peers": [
+      {
+        "publicKey": "",
+        "allowedIPs": ["0.0.0.0/0","::/0"],
+        "endpoint": ""
+      }
+    ],
+    "mtu": 1280
+  }
+}`
 
-func GetVpnScheme(rawUri string) string {
-	sep := "://"
-	if !strings.Contains(rawUri, sep) {
+// XRWireguardOut implements IOutbound
+type WireguardOut struct {
+	RawUri   string
+	Parser   *parser.ParserWirguard
+	outbound string
+}
+
+// -------------------------
+// IOutbound methods
+// -------------------------
+
+func (x *WireguardOut) Parse(rawUri string) {
+	p := &parser.ParserWirguard{}
+	if err := p.Parse(rawUri); err != nil {
+		fmt.Println("WireGuard parse error:", err)
+	}
+	x.Parser = p
+	x.RawUri = rawUri
+}
+
+func (x *WireguardOut) Addr() string {
+	if x.Parser == nil {
 		return ""
 	}
-	sList := strings.Split(rawUri, sep)
-	return sList[0] + sep
+	return x.Parser.GetAddr()
 }
 
-func HandleQuery(rawUri string) (result string) {
-	result = rawUri
-	if !strings.Contains(rawUri, "?") {
-		return
+func (x *WireguardOut) Port() int {
+	if x.Parser == nil {
+		return 0
 	}
-	sList := strings.Split(rawUri, "?")
-	query := sList[1]
-	if strings.Contains(query, ";") && !strings.Contains(query, "&") {
-		result = sList[0] + "?" + strings.ReplaceAll(sList[1], ";", "&")
-	}
-	return
+	return x.Parser.GetPort()
 }
 
-func ParseRawUri(rawUri string) (result string) {
-	if strings.HasPrefix(rawUri, SchemeVmess) {
-		if r := crypt.DecodeBase64(strings.Split(rawUri, "://")[1]); r != "" {
-			result = SchemeVmess + r
-		}
-		return
-	}
-
-	if strings.Contains(rawUri, "\u0026") {
-		rawUri = strings.ReplaceAll(rawUri, "\u0026", "&")
-	}
-	rawUri, _ = url.QueryUnescape(rawUri)
-	_, err := url.Parse(rawUri)
-	result = rawUri
-	if err != nil {
-		gtui.PrintError(err)
-		return
-	}
-
-	
-	if strings.Contains(result, "%") {
-		result, _ = url.QueryUnescape(result)
-	}
-	result = HandleQuery(result)
-	return
+func (x *WireguardOut) Scheme() string {
+	return parser.SchemeWireguard
 }
 
+func (x *WireguardOut) GetRawUri() string {
+	return x.RawUri
+}
 
+func (x *WireguardOut) GetOutboundStr() string {
+	if x.outbound == "" {
+		x.outbound = x.getSettings()
+	}
+	return x.outbound
+}
 
+// -------------------------
+// internal helper
+// -------------------------
 
+func (x *WireguardOut) getSettings() string {
+	if x.Parser == nil || x.Parser.Address == "" || x.Parser.Port == 0 {
+		return ""
+	}
 
+	j := gjson.New(XrayWireguard)
+	j.Set("tag", utils.OutboundTag)
+	j.Set("settings.secretKey", x.Parser.PrivateKey)
 
+	// addresses
+	if x.Parser.AddrV4 != "" {
+		j.Set("settings.address.0", x.Parser.AddrV4)
+	}
+	if x.Parser.AddrV6 != "" {
+		j.Set("settings.address.1", x.Parser.AddrV6)
+	}
+
+	// peer
+	j.Set("settings.peers.0.publicKey", x.Parser.PublicKey)
+	endpoint := fmt.Sprintf("%s:%d", x.Parser.Address, x.Parser.Port)
+	j.Set("settings.peers.0.endpoint", endpoint)
+
+	// mtu
+	if x.Parser.MTU > 0 {
+		j.Set("settings.mtu", x.Parser.MTU)
+	}
+
+	// reserved
+	if x.Parser.Reserved != nil {
+		j.Set("settings.reserved", x.Parser.Reserved)
+	}
+
+	return j.MustToJsonString()
+}
