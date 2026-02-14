@@ -89,31 +89,48 @@ func (x *WireguardOut) getSettings() string {
 	j.Set("settings.secretKey", x.Parser.PrivateKey)
 
 	// addresses
-	if x.Parser.AddrV4 != "" && !strings.Contains(x.Parser.AddrV4, "/") {
-    j.Set("settings.address.0", x.Parser.AddrV4+"/32")
-	} else if x.Parser.AddrV4 != "" {
-    j.Set("settings.address.0", x.Parser.AddrV4)
-}
-	if x.Parser.AddrV6 != "" && !strings.Contains(x.Parser.AddrV6, "/") {
-    j.Set("settings.address.1", x.Parser.AddrV6+"/128")
-	} else if x.Parser.AddrV6 != "" {
-    j.Set("settings.address.1", x.Parser.AddrV6)
-}
-if x.Parser.KeepAlive > 0 {
-    j.Set("settings.peers.0.persistentKeepalive", x.Parser.KeepAlive)
-}
-	// peer
+	var addresses []string
+	if x.Parser.AddrV4 != "" {
+		addr := strings.TrimSpace(x.Parser.AddrV4)
+		if !strings.Contains(addr, "/") {
+			addr += "/32"
+		}
+		addresses = append(addresses, addr)
+
+	} else {
+		addresses = append(addresses, "10.0.0.1/32")
+	}
+	if x.Parser.AddrV6 != "" {
+		if !strings.Contains(x.Parser.AddrV6, "/") {
+			addresses = append(addresses, x.Parser.AddrV6+"/128")
+		} else {
+			addresses = append(addresses, x.Parser.AddrV6)
+		}
+	}
+	j.Set("settings.address", addresses)
+
+	// Peer Settings
 	j.Set("settings.peers.0.publicKey", x.Parser.PublicKey)
+	// PresharedKey ရှိရင် ထည့်ပေးရန် (Xray support လုပ်ပါတယ်)
+	if x.Parser.PresharedKey != "" {
+		j.Set("settings.peers.0.preSharedKey", x.Parser.PresharedKey)
+	}
+
 	endpoint := fmt.Sprintf("%s:%d", x.Parser.Address, x.Parser.Port)
 	j.Set("settings.peers.0.endpoint", endpoint)
 
-	// mtu
+	if x.Parser.KeepAlive > 0 {
+		j.Set("settings.peers.0.persistentKeepalive", x.Parser.KeepAlive)
+	}
+	// MTU
 	if x.Parser.MTU > 0 {
 		j.Set("settings.mtu", x.Parser.MTU)
+	} else {
+		j.Set("settings.mtu", 1420) // Default MTU
 	}
 
-	// reserved
-	if x.Parser.Reserved != nil {
+	// Reserved (Xray-core မှာ [int, int, int] format အတိုင်း ဖြစ်ရပါမယ်)
+	if len(x.Parser.Reserved) > 0 {
 		j.Set("settings.reserved", x.Parser.Reserved)
 	}
 
