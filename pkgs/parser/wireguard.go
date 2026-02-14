@@ -2,72 +2,94 @@ package parser
 
 import (
 	"fmt"
-	"strings"
-
 	"encoding/json"
+	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/gvcgo/goutils/pkgs/gtui"
 )
 
-/*
-PrivateKey string   `koanf,json:"private_key"`
-AddrV4     string   `koanf,json:"addr_v4"`
-AddrV6     string   `koanf,json:"addr_v6"`
-DNS        string   `koanf,json:"dns"`
-MTU        int      `koanf,json:"mtu"`
-PublicKey  string   `koanf,json:"public_key"`
-AllowedIPs []string `koanf,json:"allowed_ips"`
-Endpoint   string   `koanf,json:"endpoint"`
-ClientID   string   `koanf,json:"client_id"`
-DeviceName string   `koanf,json:"device_name"`
-Reserved   []int    `koanf,json:"reserved"`
-*/
+
 
 type ParserWirguard struct {
-	PrivateKey string   `koanf,json:"private_key"`
-	AddrV4     string   `koanf,json:"addr_v4"`
-	AddrV6     string   `koanf,json:"addr_v6"`
-	DNS        string   `koanf,json:"dns"`
-	MTU        int      `koanf,json:"mtu"`
-	PublicKey  string   `koanf,json:"public_key"`
-	AllowedIPs []string `koanf,json:"allowed_ips"`
-	Endpoint   string   `koanf,json:"endpoint"`
-	ClientID   string   `koanf,json:"client_id"`
-	DeviceName string   `koanf,json:"device_name"`
-	Reserved   []int    `koanf,json:"reserved"`
-	Address    string   `koanf,json:"address"`
-	Port       int      `koanf,json:"port"`
+	PrivateKey   string
+	PublicKey    string
+	PresharedKey string
+	AddrV4       string
+	AddrV6       string
+	MTU          int
+	KeepAlive    int
+	UDP          bool
+	Reserved     []int
+	Address      string
+	Port         int
+	DeviceName   string
 }
 
-func (that *ParserWirguard) Parse(rawUri string) {
-	if strings.Contains(rawUri, SchemeWireguard) {
-		rawUri = strings.ReplaceAll(rawUri, SchemeWireguard, "")
+// Parse detects which style the URI is and parses it accordingly
+func (p *ParserWirguard) Parse(rawUri string) error {
+
+	rawUri = strings.TrimSpace(rawUri)
+
+	// remove both possible schemes
+	rawUri = strings.TrimPrefix(rawUri, "wireguard://")
+	rawUri = strings.TrimPrefix(rawUri, "wg://")
+
+	// ✅ If JSON style (starts with { )
+	if strings.HasPrefix(rawUri, "{") {
+		if err := json.Unmarshal([]byte(rawUri), p); err != nil {
+			gtui.PrintError(err)
+			return err
+		}
+		return nil
 	}
-	if err := json.Unmarshal([]byte(rawUri), that); err != nil {
+
+	// ✅ Otherwise treat as query style
+	u, err := url.Parse("wg://" + rawUri)
+	if err != nil {
 		gtui.PrintError(err)
+		return err
 	}
+
+	p.Address = u.Hostname()
+
+	port, err := strconv.Atoi(u.Port())
+	if err != nil {
+		return fmt.Errorf("invalid port")
+	}
+	p.Port = port
+
+	q := u.Query()
+	p.PrivateKey = q.Get("privateKey")
+	p.PublicKey = q.Get("publicKey")
+	p.PresharedKey = q.Get("presharedKey")
+	p.AddrV4 = q.Get("ip")
+
+	p.MTU, _ = strconv.Atoi(q.Get("mtu"))
+	p.KeepAlive, _ = strconv.Atoi(q.Get("keepalive"))
+	p.UDP = q.Get("udp") == "1"
+
+	// Reserved array
+	res := q.Get("reserved")
+	if res != "" {
+		parts := strings.Split(res, ",")
+		for _, v := range parts {
+			n, _ := strconv.Atoi(v)
+			p.Reserved = append(p.Reserved, n)
+		}
+	}
+
+	p.DeviceName = q.Get("ifp")
+
+	return nil
 }
 
-func (that *ParserWirguard) GetAddr() string {
-	return that.Address
+
+func (p *ParserWirguard) GetAddr() string {
+	return p.Address
 }
 
-func (that *ParserWirguard) GetPort() int {
-	return that.Port
-}
-
-func (that *ParserWirguard) Show() {
-	fmt.Printf("addr: %s, port: %d, privateKey: %s, publicKey: %s\n",
-		that.Address,
-		that.Port,
-		that.PrivateKey,
-		that.PublicKey,
-	)
-}
-
-func TestWireguard() {
-	rawUri := `wireguard://{"PrivateKey":"2B8LLjlXkJ608ct0LD0UnuuR9A2GuZUFBMBQJ9GFn1I=","AddrV4":"172.16.0.2","AddrV6":"2606:4700:110:8dad:87b4:b141:584d:e9dc","DNS":"1.1.1.1","MTU":1280,"PublicKey":"bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=","AllowedIPs":["0.0.0.0/0","::/0"],"Endpoint":"198.41.222.233:2087","ClientID":"GpxH","DeviceName":"D9D669","Reserved":null,"Address":"198.41.222.233","Port":2087}`
-	p := &ParserWirguard{}
-	p.Parse(rawUri)
-	p.Show()
+func (p *ParserWirguard) GetPort() int {
+	return p.Port
 }
