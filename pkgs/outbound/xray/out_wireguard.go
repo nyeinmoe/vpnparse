@@ -4,21 +4,23 @@ import (
 	"fmt"
 
 	"github.com/gogf/gf/v2/encoding/gjson"
-	"github.com/komoe-shwemyae/vpnparse/pkgs/parser"
-	"github.com/komoe-shwemyae/vpnparse/pkgs/utils"
+	"github.com/komoe-monywa/vpnparse/pkgs/parser"
+	"github.com/komoe-monywa/vpnparse/pkgs/utils"
 )
 
 var XrayWireguard = `{
   "protocol": "wireguard",
   "tag": "proxy",
   "settings": {
-    "servers": [
+    "secretKey": "",
+    "address": [],
+    "mtu": 1280,
+    "peers": [
       {
-        "address": "",
-        "port": 0,
         "publicKey": "",
-        "secretKey": "",
-        "mtu": 1280
+        "allowedIPs": ["0.0.0.0/0","::/0"],
+        "endpoint": "",
+        "persistentKeepalive": 0
       }
     ]
   }
@@ -86,14 +88,22 @@ func (x *WireguardOut) getSettings() string {
 
 	j.Set("tag", utils.OutboundTag)
 
-	j.Set("settings.servers.0.address", x.Parser.Address)
-	j.Set("settings.servers.0.port", x.Parser.Port)
-	j.Set("settings.servers.0.publicKey", x.Parser.PublicKey)
-	j.Set("settings.servers.0.secretKey", x.Parser.PrivateKey)
+	j.Set("settings.secretKey", x.Parser.PrivateKey)
+	j.Set("settings.address.0", x.Parser.AddrV4+"/32")
 
 	if x.Parser.MTU > 0 {
-		j.Set("settings.servers.0.mtu", x.Parser.MTU)
+		j.Set("settings.mtu", x.Parser.MTU)
 	}
+
+	j.Set("settings.peers.0.publicKey", x.Parser.PublicKey)
+	j.Set("settings.peers.0.preSharedKey", x.Parser.PresharedKey)
+	j.Set("settings.peers.0.endpoint",
+		fmt.Sprintf("%s:%d", x.Parser.Address, x.Parser.Port),
+	)
+	if x.Parser.KeepAlive > 0 {
+		j.Set("settings.peers.0.persistentKeepalive", x.Parser.KeepAlive)
+	}
+
 
 	return j.MustToJsonString()
 }
