@@ -9,22 +9,10 @@ import (
 )
 
 var XrayWireguard = `{
-  "protocol": "wireguard",
-  "tag": "proxy",
-  "settings": {
-    "secretKey": "",
-    "address": [],
-    "mtu": 1280,
-    "peers": [
-      {
-        "publicKey": "",
-        "allowedIPs": ["0.0.0.0/0","::/0"],
-        "endpoint": "",
-        "persistentKeepalive": 0
-      }
-    ]
-  }
-}`
+	  "protocol": "wireguard",
+	  "tag": "proxy",
+	  "settings": { "servers": [{}] }
+	}`
 
 // XRWireguardOut implements IOutbound
 type WireguardOut struct {
@@ -80,30 +68,27 @@ func (x *WireguardOut) GetOutboundStr() string {
 // -------------------------
 
 func (x *WireguardOut) getSettings() string {
-	if x.Parser == nil {
+	if x.Parser == nil || x.Parser.Address == "" || x.Parser.Port == 0 || x.Parser.PrivateKey == ""  {
 		return ""
 	}
 
 	j := gjson.New(XrayWireguard)
 
 	j.Set("tag", utils.OutboundTag)
-
-	j.Set("settings.secretKey", x.Parser.PrivateKey)
-	j.Set("settings.address.0", x.Parser.AddrV4+"/32")
+	j.Set("settings.servers.0.address", x.Parser.Address)
+	j.Set("settings.servers.0.port", x.Parser.Port)
+	j.Set("settings.servers.0.publicKey", x.Parser.PublicKey)
+	j.Set("settings.servers.0.secretKey", x.Parser.PrivateKey)
 
 	if x.Parser.MTU > 0 {
-		j.Set("settings.mtu", x.Parser.MTU)
+		j.Set("settings.servers.0.mtu", x.Parser.MTU)
 	}
-
-	j.Set("settings.peers.0.publicKey", x.Parser.PublicKey)
-	j.Set("settings.peers.0.preSharedKey", x.Parser.PresharedKey)
-	j.Set("settings.peers.0.endpoint",
-		fmt.Sprintf("%s:%d", x.Parser.Address, x.Parser.Port),
-	)
 	if x.Parser.KeepAlive > 0 {
-		j.Set("settings.peers.0.persistentKeepalive", x.Parser.KeepAlive)
+		j.Set("settings.servers.0.persistentKeepalive", x.Parser.KeepAlive)
 	}
-
+	if x.Parser.PresharedKey != "" {
+		j.Set("settings.servers.0.preSharedKey", x.Parser.PresharedKey)
+	}
 
 	return j.MustToJsonString()
 }
