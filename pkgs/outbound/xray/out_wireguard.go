@@ -68,7 +68,7 @@ func (x *WireguardOut) GetOutboundStr() string {
 // -------------------------
 
 func (x *WireguardOut) getSettings() string {
-	if x.Parser == nil || x.Parser.Address == "" || x.Parser.Port == 0 || x.Parser.PrivateKey == ""  {
+	if x.Parser == nil || x.Parser.Address == "" || x.Parser.Port == 0 || x.Parser.PrivateKey == "" {
 		return ""
 	}
 
@@ -79,16 +79,8 @@ func (x *WireguardOut) getSettings() string {
 	j.Set("settings.servers.0.port", x.Parser.Port)
 	j.Set("settings.servers.0.publicKey", x.Parser.PublicKey)
 	j.Set("settings.servers.0.secretKey", x.Parser.PrivateKey)
-
-	if x.Parser.MTU > 0 {
-		j.Set("settings.servers.0.mtu", x.Parser.MTU)
-	}
-	if x.Parser.KeepAlive > 0 {
-		j.Set("settings.servers.0.persistentKeepalive", x.Parser.KeepAlive)
-	}
-	if x.Parser.PresharedKey != "" {
-		j.Set("settings.servers.0.preSharedKey", x.Parser.PresharedKey)
-	}
-
+	j.Set("settings.servers.0.persistentKeepalive", x.Parser.KeepAlive)
+	j.Set("settings.servers.0.mtu", x.Parser.MTU)
+	j.Set("settings.servers.0.preSharedKey", x.Parser.PresharedKey)
 	return j.MustToJsonString()
 }
