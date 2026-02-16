@@ -9,13 +9,14 @@ import (
 )
 
 const (
-	SchemeSS        string = "ss://"
-	SchemeSSR       string = "ssr://"
-	SchemeTrojan    string = "trojan://"
-	SchemeVless     string = "vless://"
-	SchemeVmess     string = "vmess://"
+	SchemeSS           string = "ss://"
+	SchemeSSR          string = "ssr://"
+	SchemeTrojan       string = "trojan://"
+	SchemeVless        string = "vless://"
+	SchemeVmess        string = "vmess://"
 	SchemeWireguardOld string = "wireguard://"
 	SchemeWireguard    string = "wg://"
+	SchemeHysteria2    string = "hysteria2://"
 )
 
 func GetVpnScheme(rawUri string) string {
@@ -59,16 +60,9 @@ func ParseRawUri(rawUri string) (result string) {
 		return
 	}
 
-	
 	if strings.Contains(result, "%") {
 		result, _ = url.QueryUnescape(result)
 	}
 	result = HandleQuery(result)
 	return
 }
-
-
-
-
-
-
