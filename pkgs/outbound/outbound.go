@@ -33,6 +33,8 @@ func GetOutbound(clientType ClientType, rawUri string) (result IOutbound) {
 			result = &xray.WireguardOut{RawUri: rawUri}
 		case parser.SchemeWireguardOld:
 			result = &xray.WireguardOut{RawUri: rawUri}
+		case parser.SchemeHysteria2: // [၁] Xray အတွက် Hysteria2 ကို Register လုပ်ခြင်း
+			result = &xray.Hysteria2Out{RawUri: rawUri}
 		default:
 			fmt.Println("unsupported protocol: ", scheme)
 		}
