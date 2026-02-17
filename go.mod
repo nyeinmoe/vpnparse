@@ -1,4 +1,4 @@
-module github.com/komoe-shwemyae/vpnparse
+module github.com/nyeinmoe/vpnparse
 
 go 1.25.7
 
