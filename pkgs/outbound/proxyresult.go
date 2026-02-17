@@ -6,8 +6,8 @@ import (
 
 	"encoding/json"
 
-	"github.com/komoe-shwemyae/vpnparse/pkgs/parser"
-	"github.com/komoe-shwemyae/vpnparse/pkgs/utils"
+	"github.com/nyeinmoe/vpnparse/pkgs/parser"
+	"github.com/nyeinmoe/vpnparse/pkgs/utils"
 	"github.com/gvcgo/goutils/pkgs/gutils"
 )
 
