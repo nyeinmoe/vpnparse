@@ -5,7 +5,7 @@ import (
 
 	"github.com/nyeinmoe/vpnparse/pkgs/outbound/xray"
 	"github.com/nyeinmoe/vpnparse/pkgs/parser"
-	"github.com/komoe-shwemyae/vpnparse/pkgs/utils"
+	"github.com/nyeinmoe/vpnparse/pkgs/utils"
 )
 
 type ClientType string
