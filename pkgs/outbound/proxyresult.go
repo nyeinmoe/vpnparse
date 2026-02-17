@@ -15,14 +15,12 @@ type Result struct {
 	Vmess        []*ProxyItem `json:"Vmess"`
 	Vless        []*ProxyItem `json:"Vless"`
 	ShadowSocks  []*ProxyItem `json:"Shadowsocks"`
-	ShadowSocksR []*ProxyItem `json:"ShadowsocksR"`
 	Trojan       []*ProxyItem `json:"Trojan"`
 	UpdateAt     string       `json:"UpdateAt"`
 	VmessTotal   int          `json:"VmessTotal"`
 	VlessTotal   int          `json:"VlessTotal"`
 	TrojanTotal  int          `json:"TrojanTotal"`
 	SSTotal      int          `json:"SSTotal"`
-	SSRTotal     int          `json:"SSRTotal"`
 	totalList    []*ProxyItem
 	lock         *sync.Mutex
 }
@@ -69,9 +67,6 @@ func (that *Result) AddItem(proxyItem *ProxyItem) {
 	case parser.SchemeSS:
 		that.ShadowSocks = append(that.ShadowSocks, proxyItem)
 		that.SSTotal++
-	case parser.SchemeSSR:
-		that.ShadowSocksR = append(that.ShadowSocksR, proxyItem)
-		that.SSRTotal++
 	default:
 	}
 	that.totalList = append(that.totalList, proxyItem)
@@ -79,7 +74,7 @@ func (that *Result) AddItem(proxyItem *ProxyItem) {
 }
 
 func (that *Result) Len() int {
-	return that.VmessTotal + that.VlessTotal + that.TrojanTotal + that.SSTotal + that.SSRTotal
+	return that.VmessTotal + that.VlessTotal + that.TrojanTotal + that.SSTotal
 }
 
 func (that *Result) GetTotalList() []*ProxyItem {
@@ -88,7 +83,6 @@ func (that *Result) GetTotalList() []*ProxyItem {
 		that.totalList = append(that.totalList, that.Vless...)
 		that.totalList = append(that.totalList, that.Trojan...)
 		that.totalList = append(that.totalList, that.ShadowSocks...)
-		that.totalList = append(that.totalList, that.ShadowSocksR...)
 	}
 	return that.totalList
 }
@@ -103,8 +97,6 @@ func (that *Result) Clear() {
 	that.TrojanTotal = 0
 	that.ShadowSocks = []*ProxyItem{}
 	that.SSTotal = 0
-	that.ShadowSocksR = []*ProxyItem{}
-	that.SSRTotal = 0
 	that.totalList = []*ProxyItem{}
 	that.lock.Unlock()
 }
