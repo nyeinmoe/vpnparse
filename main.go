@@ -1,10 +1,9 @@
 package main
 
 import (
-	"github.com/komoe-shwemyae/vpnparse/pkgs/cmd"
-	_ "github.com/komoe-shwemyae/vpnparse/pkgs/outbound/sing"
-	_ "github.com/komoe-shwemyae/vpnparse/pkgs/outbound/xray"
-	_ "github.com/komoe-shwemyae/vpnparse/pkgs/parser"
+	"github.com/nyeinmoe/vpnparse/pkgs/cmd"
+	_ "github.com/nyeinmoe/vpnparse/pkgs/outbound/xray"
+	_ "github.com/nyeinmoe/vpnparse/pkgs/parser"
 )
 
 func main() {
