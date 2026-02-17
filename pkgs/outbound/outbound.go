@@ -3,8 +3,8 @@ package outbound
 import (
 	"fmt"
 
-	"github.com/komoe-shwemyae/vpnparse/pkgs/outbound/xray"
-	"github.com/komoe-shwemyae/vpnparse/pkgs/parser"
+	"github.com/nyeinmoe/vpnparse/pkgs/outbound/xray"
+	"github.com/nyeinmoe/vpnparse/pkgs/parser"
 	"github.com/komoe-shwemyae/vpnparse/pkgs/utils"
 )
 
